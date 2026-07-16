@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Button, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Button, Alert, Image } from 'react-native';
 import { Camera, CameraView } from 'expo-camera';
 import * as Device from 'expo-device';
 
@@ -42,17 +42,23 @@ export default function HomeScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Identificação do Aparelho</Text>
+      {/* Espaço para a Logo no App */}
+      <View style={styles.logoContainer}>
+        <Text style={styles.logoTitle}>OUTLET<Text style={styles.logoSubtitle}> DO CELULAR</Text></Text>
+        <Text style={styles.appSubtitle}>Checklist Triage App</Text>
+      </View>
       
       <View style={styles.infoCard}>
-        <Text style={styles.infoText}>Marca detectada: {Device.brand || 'N/A'}</Text>
-        <Text style={styles.infoText}>Modelo detectado: {Device.modelName || 'N/A'}</Text>
+        <Text style={styles.infoTitle}>Aparelho Detectado</Text>
+        <Text style={styles.infoText}>Marca: {Device.brand || 'N/A'}</Text>
+        <Text style={styles.infoText}>Modelo: {Device.modelName || 'N/A'}</Text>
       </View>
 
       <Text style={styles.label}>IMEI / Serial Number:</Text>
       <TextInput
         style={styles.input}
         placeholder="Digite ou escaneie o IMEI"
+        placeholderTextColor="#999"
         value={imei}
         onChangeText={setImei}
         keyboardType="default"
@@ -60,7 +66,7 @@ export default function HomeScreen({ navigation }) {
 
       {!showCamera ? (
         <TouchableOpacity style={styles.scanButton} onPress={() => { setScanned(false); setShowCamera(true); }}>
-          <Text style={styles.buttonText}>📷 Escanear Código de Barras (IMEI)</Text>
+          <Text style={styles.scanButtonText}>📷 Escanear Código de Barras</Text>
         </TouchableOpacity>
       ) : (
         <View style={styles.cameraContainer}>
@@ -74,13 +80,13 @@ export default function HomeScreen({ navigation }) {
               style={StyleSheet.absoluteFillObject}
             />
           )}
-          <Button title="Cancelar Escaneamento" onPress={() => setShowCamera(false)} color="red" />
+          <Button title="Cancelar Escaneamento" onPress={() => setShowCamera(false)} color="#d32f2f" />
         </View>
       )}
 
       {!showCamera && (
         <TouchableOpacity style={styles.startButton} onPress={startTests}>
-          <Text style={styles.startButtonText}>Iniciar Testes ➔</Text>
+          <Text style={styles.startButtonText}>INICIAR TESTES</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -90,70 +96,104 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#f8f9fa',
     padding: 20,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 20,
-    textAlign: 'center',
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+    marginTop: 10,
+  },
+  logoTitle: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#d32f2f', // Vermelho Outlet
+    letterSpacing: -1,
+  },
+  logoSubtitle: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: '#d32f2f',
+  },
+  appSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 5,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
   infoCard: {
-    backgroundColor: '#1e1e1e',
-    padding: 15,
-    borderRadius: 8,
-    marginBottom: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#00e676',
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 25,
+    borderLeftWidth: 5,
+    borderLeftColor: '#d32f2f',
+    elevation: 3, // sombra no android
+    shadowColor: '#000', // sombra no ios
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
   },
   infoText: {
-    color: '#aaaaaa',
+    color: '#555',
     fontSize: 16,
     marginBottom: 5,
   },
   label: {
-    color: '#ffffff',
+    color: '#333',
     fontSize: 16,
+    fontWeight: 'bold',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#2c2c2c',
-    color: '#ffffff',
+    backgroundColor: '#ffffff',
+    color: '#333',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 10,
     fontSize: 18,
     marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   scanButton: {
-    backgroundColor: '#333333',
+    backgroundColor: '#ffffff',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
     marginBottom: 30,
+    borderWidth: 1,
+    borderColor: '#d32f2f',
   },
-  buttonText: {
-    color: '#ffffff',
+  scanButtonText: {
+    color: '#d32f2f',
     fontSize: 16,
     fontWeight: 'bold',
   },
   startButton: {
-    backgroundColor: '#2979ff',
+    backgroundColor: '#d32f2f', // Vermelho Outlet
     padding: 18,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
+    elevation: 3,
   },
   startButtonText: {
     color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
+    letterSpacing: 1,
   },
   cameraContainer: {
     height: 300,
     width: '100%',
     overflow: 'hidden',
-    borderRadius: 8,
+    borderRadius: 10,
     marginBottom: 20,
   }
 });

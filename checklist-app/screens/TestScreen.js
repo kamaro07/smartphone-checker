@@ -20,13 +20,13 @@ const TestItem = ({ title, status, onApprove, onReject, onRunTest, isInteractive
         style={[styles.btnAction, styles.btnReject, status === false && styles.btnRejectActive]} 
         onPress={onReject}
       >
-        <Text style={styles.btnActionText}>Reprovar</Text>
+        <Text style={[styles.btnActionText, status === false && styles.btnActiveText]}>Reprovar</Text>
       </TouchableOpacity>
       <TouchableOpacity 
         style={[styles.btnAction, styles.btnApprove, status === true && styles.btnApproveActive]} 
         onPress={onApprove}
       >
-        <Text style={styles.btnActionText}>Aprovar</Text>
+        <Text style={[styles.btnActionText, status === true && styles.btnActiveText]}>Aprovar</Text>
       </TouchableOpacity>
     </View>
   </View>
@@ -37,27 +37,23 @@ export default function TestScreen({ route, navigation }) {
   const [results, setResults] = useState({});
   const [sound, setSound] = useState();
 
-  // Teste de Vibração
   const testVibration = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Alert.alert('Teste de Vibração', 'O aparelho vibrou?');
   };
 
-  // Teste de Som
   const testSound = async () => {
     try {
       const { sound } = await Audio.Sound.createAsync(
-        require('../assets/favicon.png'), // Dummy, in a real app would be an audio file. We'll just beep or alert.
+        require('../assets/favicon.png'), 
       );
       setSound(sound);
       await sound.playAsync();
     } catch (error) {
-      // If we don't have an asset, just vibrate and alert
       Alert.alert('Teste de Som', 'Reproduzindo som de teste... O som saiu alto e claro?');
     }
   };
 
-  // Teste de Brilho da Tela (Visual)
   const testBrightness = () => {
     Alert.alert('Teste de Brilho', 'Aumente e diminua o brilho do aparelho na barra de notificações para verificar o funcionamento.');
   };
@@ -69,7 +65,7 @@ export default function TestScreen({ route, navigation }) {
   const allTests = [
     { key: 'tela', title: 'Tela e Touch (Visual/Toque)' },
     { key: 'vibracao', title: 'Vibração', interactive: testVibration },
-    { key: 'sensorProximidade', title: 'Sensor de Proximidade / Luz (Passe a mão)' },
+    { key: 'sensorProximidade', title: 'Sensor de Proximidade / Luz' },
     { key: 'som', title: 'Som / Campainha / Earpiece', interactive: testSound },
     { key: 'brilho', title: 'Controle de Brilho', interactive: testBrightness },
     { key: 'cameraFrontal', title: 'Câmera Frontal' },
@@ -86,8 +82,10 @@ export default function TestScreen({ route, navigation }) {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.headerTitle}>Execução de Testes</Text>
-      <Text style={styles.subTitle}>{deviceInfo.brand} {deviceInfo.model}</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Execução de Testes</Text>
+        <Text style={styles.subTitle}>{deviceInfo.brand} {deviceInfo.model}</Text>
+      </View>
 
       {allTests.map(test => (
         <TestItem 
@@ -112,43 +110,60 @@ export default function TestScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#f8f9fa',
     padding: 15,
+  },
+  header: {
+    backgroundColor: '#ffffff',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderBottomWidth: 4,
+    borderBottomColor: '#d32f2f',
+    elevation: 2,
   },
   headerTitle: {
-    color: '#fff',
+    color: '#d32f2f',
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '900',
     textAlign: 'center',
-    marginTop: 10,
+    textTransform: 'uppercase',
   },
   subTitle: {
-    color: '#00e676',
+    color: '#333',
     fontSize: 16,
     textAlign: 'center',
-    marginBottom: 20,
+    fontWeight: '600',
+    marginTop: 5,
   },
   testCard: {
-    backgroundColor: '#1e1e1e',
-    borderRadius: 10,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
     padding: 15,
     marginBottom: 15,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   testTitle: {
-    color: '#fff',
+    color: '#333',
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 10,
   },
   runButton: {
-    backgroundColor: '#333',
+    backgroundColor: '#f0f0f0',
     padding: 10,
-    borderRadius: 5,
+    borderRadius: 8,
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   runButtonText: {
-    color: '#4fc3f7',
+    color: '#d32f2f',
     fontWeight: 'bold',
   },
   actionRow: {
@@ -158,40 +173,45 @@ const styles = StyleSheet.create({
   btnAction: {
     flex: 1,
     padding: 12,
-    borderRadius: 5,
+    borderRadius: 8,
     alignItems: 'center',
     marginHorizontal: 5,
-    backgroundColor: '#333',
+    backgroundColor: '#ffffff',
   },
   btnReject: {
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#ff5252',
   },
   btnRejectActive: {
     backgroundColor: '#ff5252',
   },
   btnApprove: {
-    borderWidth: 1,
-    borderColor: '#00e676',
+    borderWidth: 2,
+    borderColor: '#00c853',
   },
   btnApproveActive: {
-    backgroundColor: '#00e676',
+    backgroundColor: '#00c853',
   },
   btnActionText: {
-    color: '#fff',
+    color: '#666',
     fontWeight: 'bold',
   },
+  btnActiveText: {
+    color: '#ffffff',
+  },
   finishButton: {
-    backgroundColor: '#2979ff',
+    backgroundColor: '#d32f2f',
     padding: 18,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
     marginTop: 20,
     marginBottom: 40,
+    elevation: 3,
   },
   finishButtonText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
+    letterSpacing: 1,
   }
 });

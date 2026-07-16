@@ -7,11 +7,10 @@ export default function ResultScreen({ route, navigation }) {
   const [serverIp, setServerIp] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Calcula Aprovados / Reprovados / Não Testados
   const keys = Object.keys(tests);
   const aprovados = keys.filter(k => tests[k] === true).length;
   const reprovados = keys.filter(k => tests[k] === false).length;
-  const pendentes = 11 - (aprovados + reprovados); // 11 testes totais
+  const pendentes = 11 - (aprovados + reprovados);
 
   const sendReport = async () => {
     if (!serverIp.trim()) {
@@ -33,7 +32,7 @@ export default function ResultScreen({ route, navigation }) {
 
       if (response.data.success) {
         Alert.alert('Sucesso!', 'Relatório PDF gerado e salvo no PC com sucesso!');
-        navigation.navigate('Home'); // Volta ao início para um novo aparelho
+        navigation.navigate('Home');
       }
     } catch (error) {
       console.error(error);
@@ -54,17 +53,17 @@ export default function ResultScreen({ route, navigation }) {
 
       <Text style={styles.title}>Resultados</Text>
       <View style={styles.resultsContainer}>
-        <View style={[styles.resultBox, { borderColor: '#00e676' }]}>
-          <Text style={[styles.resultNumber, { color: '#00e676' }]}>{aprovados}</Text>
-          <Text style={styles.resultLabel}>Aprovados</Text>
+        <View style={[styles.resultBox, { borderColor: '#00c853', backgroundColor: '#e8f5e9' }]}>
+          <Text style={[styles.resultNumber, { color: '#00c853' }]}>{aprovados}</Text>
+          <Text style={[styles.resultLabel, { color: '#00c853' }]}>Aprovados</Text>
         </View>
-        <View style={[styles.resultBox, { borderColor: '#ff5252' }]}>
+        <View style={[styles.resultBox, { borderColor: '#ff5252', backgroundColor: '#ffebee' }]}>
           <Text style={[styles.resultNumber, { color: '#ff5252' }]}>{reprovados}</Text>
-          <Text style={styles.resultLabel}>Reprovados</Text>
+          <Text style={[styles.resultLabel, { color: '#ff5252' }]}>Reprovados</Text>
         </View>
-        <View style={[styles.resultBox, { borderColor: '#aaaaaa' }]}>
-          <Text style={[styles.resultNumber, { color: '#aaaaaa' }]}>{pendentes}</Text>
-          <Text style={styles.resultLabel}>Não Testados</Text>
+        <View style={[styles.resultBox, { borderColor: '#9e9e9e', backgroundColor: '#f5f5f5' }]}>
+          <Text style={[styles.resultNumber, { color: '#9e9e9e' }]}>{pendentes}</Text>
+          <Text style={[styles.resultLabel, { color: '#9e9e9e' }]}>Não Testados</Text>
         </View>
       </View>
 
@@ -73,7 +72,7 @@ export default function ResultScreen({ route, navigation }) {
         <TextInput 
           style={styles.input}
           placeholder="Ex: 192.168.1.100"
-          placeholderTextColor="#777"
+          placeholderTextColor="#999"
           value={serverIp}
           onChangeText={setServerIp}
           keyboardType="numeric"
@@ -89,7 +88,7 @@ export default function ResultScreen({ route, navigation }) {
         {loading ? (
           <ActivityIndicator color="#fff" />
         ) : (
-          <Text style={styles.sendButtonText}>Gerar Relatório PDF</Text>
+          <Text style={styles.sendButtonText}>GERAR RELATÓRIO PDF</Text>
         )}
       </TouchableOpacity>
     </View>
@@ -99,29 +98,35 @@ export default function ResultScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: '#f8f9fa',
     padding: 20,
   },
   title: {
-    color: '#fff',
+    color: '#d32f2f',
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: '900',
     marginBottom: 15,
     marginTop: 10,
+    textTransform: 'uppercase',
   },
   card: {
-    backgroundColor: '#1e1e1e',
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 12,
     marginBottom: 20,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   cardText: {
-    color: '#ccc',
+    color: '#555',
     fontSize: 16,
-    marginBottom: 5,
+    marginBottom: 8,
   },
   highlight: {
-    color: '#fff',
+    color: '#333',
     fontWeight: 'bold',
   },
   resultsContainer: {
@@ -131,52 +136,62 @@ const styles = StyleSheet.create({
   },
   resultBox: {
     flex: 1,
-    backgroundColor: '#1e1e1e',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
-    marginHorizontal: 5,
-    borderWidth: 1,
+    marginHorizontal: 4,
+    borderWidth: 1.5,
   },
   resultNumber: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '900',
     marginBottom: 5,
   },
   resultLabel: {
-    color: '#ccc',
     fontSize: 12,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
   serverSection: {
     marginTop: 10,
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 12,
+    elevation: 2,
+    marginBottom: 30,
   },
   label: {
-    color: '#fff',
+    color: '#333',
     fontSize: 16,
+    fontWeight: 'bold',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#2c2c2c',
-    color: '#fff',
+    backgroundColor: '#f8f9fa',
+    color: '#333',
     padding: 15,
     borderRadius: 8,
     fontSize: 16,
-    marginBottom: 5,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
   },
   hint: {
-    color: '#888',
+    color: '#777',
     fontSize: 12,
-    marginBottom: 20,
+    fontStyle: 'italic',
   },
   sendButton: {
-    backgroundColor: '#00e676',
+    backgroundColor: '#d32f2f',
     padding: 18,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
+    elevation: 3,
   },
   sendButtonText: {
-    color: '#000',
+    color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
+    letterSpacing: 1,
   }
 });
