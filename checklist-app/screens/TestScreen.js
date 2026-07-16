@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { LightSensor } from 'expo-sensors';
 import { Audio } from 'expo-av';
+import * as Network from 'expo-network';
+import * as Battery from 'expo-battery';
 
 // Helper component for Yes/No Tests
 const TestItem = ({ title, status, onApprove, onReject, onRunTest, isInteractive }) => (
@@ -37,15 +38,17 @@ export default function TestScreen({ route, navigation }) {
   const [results, setResults] = useState({});
   const [sound, setSound] = useState();
 
+  // Função para Teste de Vibração
   const testVibration = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Alert.alert('Teste de Vibração', 'O aparelho vibrou?');
   };
 
+  // Função para Teste de Som
   const testSound = async () => {
     try {
       const { sound } = await Audio.Sound.createAsync(
-        require('../assets/favicon.png'), 
+        require('../assets/favicon.png'), // Placeholder
       );
       setSound(sound);
       await sound.playAsync();
@@ -54,8 +57,39 @@ export default function TestScreen({ route, navigation }) {
     }
   };
 
+  // Teste de Brilho
   const testBrightness = () => {
     Alert.alert('Teste de Brilho', 'Aumente e diminua o brilho do aparelho na barra de notificações para verificar o funcionamento.');
+  };
+
+  // 🤖 TESTES AUTOMATIZADOS 🤖
+  const testAutoNetwork = async () => {
+    try {
+      const networkState = await Network.getNetworkStateAsync();
+      if (networkState.isConnected && networkState.isInternetReachable) {
+        updateResult('wifi', true);
+        Alert.alert('Teste Wi-Fi', 'Conexão de rede detectada e funcionando. Teste Aprovado automaticamente!');
+      } else {
+        updateResult('wifi', false);
+        Alert.alert('Teste Wi-Fi', 'Nenhuma conexão de rede detectada.');
+      }
+    } catch (e) {
+      Alert.alert('Erro', 'Não foi possível checar a rede automaticamente.');
+    }
+  };
+
+  const testAutoUSB = async () => {
+    try {
+      const batteryState = await Battery.getBatteryStateAsync();
+      if (batteryState === Battery.BatteryState.CHARGING || batteryState === Battery.BatteryState.FULL) {
+        updateResult('usb', true);
+        Alert.alert('Teste USB/Bateria', 'Carregamento detectado. Teste Aprovado automaticamente!');
+      } else {
+        Alert.alert('Teste USB/Bateria', 'O aparelho não está carregando. Conecte o cabo USB para aprovar.');
+      }
+    } catch (e) {
+      Alert.alert('Erro', 'Não foi possível checar a bateria automaticamente.');
+    }
   };
 
   const updateResult = (key, value) => {
@@ -70,9 +104,9 @@ export default function TestScreen({ route, navigation }) {
     { key: 'brilho', title: 'Controle de Brilho', interactive: testBrightness },
     { key: 'cameraFrontal', title: 'Câmera Frontal' },
     { key: 'cameraTraseira', title: 'Câmera Traseira' },
-    { key: 'wifi', title: 'Conectividade Wi-Fi' },
+    { key: 'wifi', title: 'Conectividade Wi-Fi / Rede (Automático)', interactive: testAutoNetwork },
     { key: 'chip', title: 'Leitura de Chip (SIM)' },
-    { key: 'usb', title: 'Conector USB / Carregamento' },
+    { key: 'usb', title: 'Conector USB / Carregamento (Automático)', interactive: testAutoUSB },
     { key: 'estetica', title: 'Estética / Carcaça' },
   ];
 
