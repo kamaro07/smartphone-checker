@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Button, Alert, Image } from 'react-native';
 import { Camera, CameraView } from 'expo-camera';
 import * as Device from 'expo-device';
+import axios from 'axios';
 
 export default function HomeScreen({ navigation }) {
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [imei, setImei] = useState('');
+  const [serverIp, setServerIp] = useState('');
   const [showCamera, setShowCamera] = useState(false);
+  const pingInterval = useRef(null);
 
   useEffect(() => {
     const getBarCodeScannerPermissions = async () => {
@@ -24,6 +27,30 @@ export default function HomeScreen({ navigation }) {
     setShowCamera(false);
     Alert.alert('Código Escaneado!', `IMEI/Serial: ${data}`);
   };
+
+  // Lógica de Ping para Auto-Discovery (Wi-Fi)
+  useEffect(() => {
+    if (serverIp && imei) {
+      if (pingInterval.current) clearInterval(pingInterval.current);
+      
+      pingInterval.current = setInterval(async () => {
+        try {
+          await axios.post(`http://${serverIp}:3000/api/ping`, {
+            deviceId: imei,
+            brand: Device.brand || 'Desconhecida',
+            model: Device.modelName || 'Desconhecido',
+            os: Device.osName || 'Android',
+            osVersion: Device.osVersion || ''
+          }, { timeout: 2000 });
+        } catch (e) {
+          // Ignora erros silenciosamente (ping)
+        }
+      }, 5000);
+    }
+    return () => {
+      if (pingInterval.current) clearInterval(pingInterval.current);
+    };
+  }, [serverIp, imei]);
 
   const startTests = () => {
     if (!imei.trim()) {
@@ -62,6 +89,16 @@ export default function HomeScreen({ navigation }) {
         value={imei}
         onChangeText={setImei}
         keyboardType="default"
+      />
+
+      <Text style={styles.label}>IP do Desktop Controller (opcional):</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Ex: 192.168.x.x"
+        placeholderTextColor="#999"
+        value={serverIp}
+        onChangeText={setServerIp}
+        keyboardType="numeric"
       />
 
       {!showCamera ? (
