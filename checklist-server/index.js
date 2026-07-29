@@ -10,6 +10,9 @@ const { exec } = require('child_process');
 const app = express();
 const PORT = 3000;
 
+// Path to the downloaded ADB binary
+const adbPath = path.join(__dirname, 'platform-tools', 'adb.exe');
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -100,64 +103,57 @@ app.get('/api/devices', (req, res) => {
 // 3. MONITORAMENTO USB (ADB)
 // ==========================================
 
-function monitorUSB() {
-  exec('adb devices', (err, stdout, stderr) => {
-    if (err) return; // Ignora erros se adb não estiver instalado
-
+setInterval(() => {
+  exec(`"${adbPath}" devices`, (err, stdout, stderr) => {
+    if (err) {
+      console.log('Erro ao rodar ADB:', err.message);
+      return; 
+    }
+    
     const lines = stdout.split('\n');
-    lines.shift(); // Remove a primeira linha 'List of devices attached'
-
     lines.forEach(line => {
-      const parts = line.trim().split('\t');
-      if (parts.length === 2 && parts[1] === 'device') {
-        const deviceId = parts[0];
+      if (line.includes('device') && !line.includes('List')) {
+        const deviceId = line.split('\t')[0].trim();
         
-        // Se já conhecemos, pula
-        if (connectedDevices[deviceId]) return;
-
-        // Adiciona dispositivo
-        connectedDevices[deviceId] = {
-          id: deviceId,
-          model: 'Obtendo...',
-          os: 'Android',
-          connectionType: 'USB',
-          status: 'Detectado'
-        };
-
-        // Obter modelo
-        exec(`adb -s ${deviceId} shell getprop ro.product.model`, (errMod, stdoutMod) => {
-          if (!errMod && connectedDevices[deviceId]) {
-            connectedDevices[deviceId].model = stdoutMod.trim();
-          }
-        });
-
-        // Verificar se App está instalado
-        const packageName = 'com.outlet.checklist'; // Substitua pelo package.json do Expo
-        exec(`adb -s ${deviceId} shell pm list packages | findstr ${packageName}`, (errPkg, stdoutPkg) => {
-          if (stdoutPkg.includes(packageName)) {
-            if(connectedDevices[deviceId]) connectedDevices[deviceId].status = 'App Instalado';
-            // Abre o app
-            exec(`adb -s ${deviceId} shell monkey -p ${packageName} -c android.intent.category.LAUNCHER 1`);
-          } else {
-            // Instala o app
-            if(connectedDevices[deviceId]) connectedDevices[deviceId].status = 'Instalando...';
-            const apkPath = path.join(__dirname, 'public', 'app-release.apk');
-            exec(`adb -s ${deviceId} install -r "${apkPath}"`, (errInst) => {
-              if (!errInst && connectedDevices[deviceId]) {
-                connectedDevices[deviceId].status = 'App Instalado';
-                exec(`adb -s ${deviceId} shell monkey -p ${packageName} -c android.intent.category.LAUNCHER 1`);
+        if (!connectedDevices[deviceId]) {
+          console.log(`[USB] Novo dispositivo conectado: ${deviceId}`);
+          connectedDevices[deviceId] = { status: 'installing' };
+          
+          exec(`"${adbPath}" -s ${deviceId} shell getprop ro.product.model`, (errMod, stdoutMod) => {
+            const model = stdoutMod ? stdoutMod.trim() : 'Desconhecido';
+            console.log(`[USB] Modelo detectado: ${model}`);
+            
+            const packageName = 'com.out014.checklistapp';
+            exec(`"${adbPath}" -s ${deviceId} shell pm list packages | findstr ${packageName}`, (errPkg, stdoutPkg) => {
+              if (stdoutPkg && stdoutPkg.includes(packageName)) {
+                console.log(`[USB] App já instalado. Abrindo app...`);
+                exec(`"${adbPath}" -s ${deviceId} shell monkey -p ${packageName} -c android.intent.category.LAUNCHER 1`);
+                connectedDevices[deviceId].status = 'ready';
+              } else {
+                console.log(`[USB] Instalando App no dispositivo ${model}...`);
+                const apkPath = path.join(__dirname, 'public', 'app-release.apk');
+                
+                if (fs.existsSync(apkPath)) {
+                  exec(`"${adbPath}" -s ${deviceId} install -r "${apkPath}"`, (errInst) => {
+                    if (!errInst) {
+                      console.log(`[USB] Instalação concluída! Abrindo app...`);
+                      exec(`"${adbPath}" -s ${deviceId} shell monkey -p ${packageName} -c android.intent.category.LAUNCHER 1`);
+                      connectedDevices[deviceId].status = 'ready';
+                    } else {
+                      console.log(`[USB] Erro na instalação: ${errInst.message}`);
+                    }
+                  });
+                } else {
+                  console.log('[USB] Erro: APK não encontrado em public/app-release.apk');
+                }
               }
             });
-          }
-        });
+          });
+        }
       }
     });
   });
-}
-
-// Roda o monitor a cada 5 segundos
-setInterval(monitorUSB, 5000);
-
+}, 5000);
 
 // ==========================================
 // 4. ROTA DE RELATÓRIO PDF (MANTEVE-SE IGUAL)
