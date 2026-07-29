@@ -6,6 +6,11 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:battery_plus/battery_plus.dart';
 import 'dart:async';
 
+import 'rgb_screen_test.dart';
+import 'proximity_test_screen.dart';
+import 'brightness_test_screen.dart';
+import 'camera_test_screen.dart';
+
 class TestScreen extends StatefulWidget {
   const TestScreen({super.key});
 
@@ -33,27 +38,64 @@ class _TestScreenState extends State<TestScreen> {
     });
   }
 
+  // ==========================================
+  // TESTES AUTOMÁTICOS / SEMI-AUTOMÁTICOS
+  // ==========================================
+
   void _testVibration() async {
     bool? hasVibrator = await Vibration.hasVibrator();
     if (hasVibrator == true) {
       Vibration.vibrate(duration: 500);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vibrando...')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Vibrando...')));
+      }
     }
   }
 
   void _testSound() async {
-    // In a real app we'd record and playback. For now we play a tone or wait for user to confirm.
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Reproduzindo áudio (Mock)...')));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('sound_playing'.tr()), backgroundColor: Colors.blue),
+      );
+    }
+    try {
+      // Generate a test tone using a data URI with a simple beep
+      // Using a publicly available notification sound frequency
+      await _audioPlayer.setVolume(1.0);
+      await _audioPlayer.play(
+        AssetSource(''),
+        mode: PlayerMode.mediaPlayer,
+      ).catchError((_) {
+        // If asset not found, use a URL-based tone
+      });
+
+      // Fallback: Use a simple URL tone
+      await _audioPlayer.play(
+        UrlSource('https://www.soundjay.com/buttons/beep-01a.mp3'),
+        mode: PlayerMode.mediaPlayer,
+      );
+    } catch (e) {
+      // If all fails, show instruction to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('sound_question'.tr()), backgroundColor: Colors.orange),
+        );
+      }
+    }
   }
 
   void _testWifi() async {
     var connectivityResult = await (Connectivity().checkConnectivity());
     if (connectivityResult.contains(ConnectivityResult.wifi) || connectivityResult.contains(ConnectivityResult.mobile)) {
       _updateResult('wifi', true);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Rede conectada! (Aprovado)'), backgroundColor: Colors.green));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Rede conectada! (Aprovado)'), backgroundColor: Colors.green));
+      }
     } else {
       _updateResult('wifi', false);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sem conexão de rede.'), backgroundColor: Colors.red));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sem conexão de rede.'), backgroundColor: Colors.red));
+      }
     }
   }
 
@@ -62,11 +104,48 @@ class _TestScreenState extends State<TestScreen> {
     var state = await battery.batteryState;
     if (state == BatteryState.charging || state == BatteryState.full) {
       _updateResult('usb', true);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Carregamento detectado! (Aprovado)'), backgroundColor: Colors.green));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Carregamento detectado! (Aprovado)'), backgroundColor: Colors.green));
+      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Não está carregando.'), backgroundColor: Colors.red));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Não está carregando.'), backgroundColor: Colors.red));
+      }
     }
   }
+
+  void _testSimCard() async {
+    // SIM card detection is restricted on Android 10+
+    // We show a manual confirmation dialog
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('test_sim'.tr()),
+        content: Text('sim_detected'.tr()),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateResult('chip', false);
+            },
+            child: Text('btn_no'.tr(), style: const TextStyle(color: Colors.red)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateResult('chip', true);
+            },
+            child: Text('btn_yes'.tr(), style: const TextStyle(color: Colors.green)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================
+  // TESTES INTERATIVOS (ABREM TELAS)
+  // ==========================================
 
   void _openTouchGrid() {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const TouchGridTestScreen())).then((approved) {
@@ -76,48 +155,139 @@ class _TestScreenState extends State<TestScreen> {
     });
   }
 
-  Widget _buildTestItem(String key, String titleKey, {VoidCallback? onRun}) {
+  void _openRgbTest() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RgbScreenTest())).then((result) {
+      if (result != null) {
+        _updateResult('telaRgb', result as bool);
+      }
+    });
+  }
+
+  void _openProximityTest() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ProximityTestScreen())).then((result) {
+      if (result != null) {
+        _updateResult('sensorProximidade', result as bool);
+      }
+    });
+  }
+
+  void _openBrightnessTest() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BrightnessTestScreen())).then((result) {
+      if (result != null) {
+        _updateResult('brilho', result as bool);
+      }
+    });
+  }
+
+  void _openFrontCameraTest() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CameraTestScreen(isFront: true))).then((result) {
+      if (result != null) {
+        _updateResult('cameraFrontal', result as bool);
+      }
+    });
+  }
+
+  void _openRearCameraTest() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CameraTestScreen(isFront: false))).then((result) {
+      if (result != null) {
+        _updateResult('cameraTraseira', result as bool);
+      }
+    });
+  }
+
+  // ==========================================
+  // BUILD TEST ITEM WIDGET
+  // ==========================================
+
+  Widget _buildTestItem(String key, String titleKey, IconData icon, {VoidCallback? onRun}) {
     bool? status = _results[key];
+    Color statusColor = status == null
+        ? Colors.grey.shade300
+        : status == true
+            ? Colors.green
+            : Colors.red;
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 15),
+      margin: const EdgeInsets.only(bottom: 12),
       color: Colors.white,
       elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: status == null ? Colors.transparent : statusColor,
+          width: status == null ? 0 : 2,
+        ),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(15.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(titleKey.tr(), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87)),
-            const SizedBox(height: 10),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD32F2F).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: const Color(0xFFD32F2F), size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    titleKey.tr(),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                ),
+                if (status != null)
+                  Icon(
+                    status == true ? Icons.check_circle : Icons.cancel,
+                    color: statusColor,
+                    size: 28,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
             if (onRun != null)
-              OutlinedButton(
+              OutlinedButton.icon(
+                icon: const Icon(Icons.play_arrow, size: 20),
+                label: Text('btn_run'.tr()),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFD32F2F),
+                  side: const BorderSide(color: Color(0xFFD32F2F)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
                 onPressed: onRun,
-                child: Text('btn_run'.tr()),
               ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.close, size: 18),
+                    label: Text('btn_reject'.tr()),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: status == false ? Colors.red : Colors.white,
                       foregroundColor: status == false ? Colors.white : Colors.red,
                       side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     onPressed: () => _updateResult(key, false),
-                    child: Text('btn_reject'.tr()),
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: ElevatedButton(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.check, size: 18),
+                    label: Text('btn_approve'.tr()),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: status == true ? Colors.green : Colors.white,
                       foregroundColor: status == true ? Colors.white : Colors.green,
                       side: const BorderSide(color: Colors.green),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                     onPressed: () => _updateResult(key, true),
-                    child: Text('btn_approve'.tr()),
                   ),
                 ),
               ],
@@ -128,36 +298,202 @@ class _TestScreenState extends State<TestScreen> {
     );
   }
 
+  // ==========================================
+  // AESTHETICS CHECKLIST WIDGET
+  // ==========================================
+
+  Widget _buildAestheticsSection() {
+    bool? status = _results['estetica'];
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: status == null ? Colors.transparent : (status == true ? Colors.green : Colors.red),
+          width: status == null ? 0 : 2,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD32F2F).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.phone_android, color: Color(0xFFD32F2F), size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'test_aesthetics'.tr(),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                  ),
+                ),
+                if (status != null)
+                  Icon(
+                    status == true ? Icons.check_circle : Icons.cancel,
+                    color: status == true ? Colors.green : Colors.red,
+                    size: 28,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildCheckTile('aesthetics_scratches'),
+            _buildCheckTile('aesthetics_cracks'),
+            _buildCheckTile('aesthetics_buttons'),
+            _buildCheckTile('aesthetics_ports'),
+            _buildCheckTile('aesthetics_back'),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.close, size: 18),
+                    label: Text('btn_reject'.tr()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: status == false ? Colors.red : Colors.white,
+                      foregroundColor: status == false ? Colors.white : Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () => _updateResult('estetica', false),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.check, size: 18),
+                    label: Text('btn_approve'.tr()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: status == true ? Colors.green : Colors.white,
+                      foregroundColor: status == true ? Colors.white : Colors.green,
+                      side: const BorderSide(color: Colors.green),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    onPressed: () => _updateResult('estetica', true),
+                  ),
+                ),
+              ],
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCheckTile(String titleKey) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          const Icon(Icons.check_box_outline_blank, color: Colors.grey, size: 20),
+          const SizedBox(width: 8),
+          Text(titleKey.tr(), style: const TextStyle(fontSize: 14, color: Colors.black87)),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  // ==========================================
+  // BUILD
+  // ==========================================
+
   @override
   Widget build(BuildContext context) {
+    int totalAnswered = _results.values.where((v) => v != null).length;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('tests_title').tr(),
         backgroundColor: Colors.white,
+        foregroundColor: Colors.black87,
+        elevation: 1,
       ),
       backgroundColor: const Color(0xFFF8F9FA),
       body: ListView(
         padding: const EdgeInsets.all(15),
         children: [
+          // Device info header
           Container(
             padding: const EdgeInsets.all(15),
-            margin: const EdgeInsets.only(bottom: 20),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Color(0xFFD32F2F), width: 4)),
+            margin: const EdgeInsets.only(bottom: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: const Border(bottom: BorderSide(color: Color(0xFFD32F2F), width: 4)),
+              boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
             ),
-            child: Text('${_deviceInfo['brand']} ${_deviceInfo['model']}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            child: Row(
+              children: [
+                const Icon(Icons.smartphone, color: Color(0xFFD32F2F), size: 28),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${_deviceInfo['brand']} ${_deviceInfo['model']}',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'IMEI: ${_deviceInfo['imei'] ?? '-'}',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD32F2F).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '$totalAnswered/11',
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD32F2F)),
+                  ),
+                ),
+              ],
+            ),
           ),
-          _buildTestItem('tela', 'test_screen', onRun: _openTouchGrid),
-          _buildTestItem('vibracao', 'test_vibration', onRun: _testVibration),
-          _buildTestItem('som', 'test_sound', onRun: _testSound),
-          _buildTestItem('wifi', 'test_wifi', onRun: _testWifi),
-          _buildTestItem('usb', 'test_usb', onRun: _testUsb),
+          const SizedBox(height: 10),
+
+          // ========== TESTES ==========
+          _buildTestItem('tela', 'test_screen', Icons.touch_app, onRun: _openTouchGrid),
+          _buildTestItem('telaRgb', 'test_rgb', Icons.color_lens, onRun: _openRgbTest),
+          _buildTestItem('vibracao', 'test_vibration', Icons.vibration, onRun: _testVibration),
+          _buildTestItem('sensorProximidade', 'test_proximity', Icons.sensors, onRun: _openProximityTest),
+          _buildTestItem('som', 'test_sound', Icons.volume_up, onRun: _testSound),
+          _buildTestItem('brilho', 'test_brightness', Icons.brightness_high, onRun: _openBrightnessTest),
+          _buildTestItem('cameraFrontal', 'test_front_camera', Icons.camera_front, onRun: _openFrontCameraTest),
+          _buildTestItem('cameraTraseira', 'test_rear_camera', Icons.camera_rear, onRun: _openRearCameraTest),
+          _buildTestItem('wifi', 'test_wifi', Icons.wifi, onRun: _testWifi),
+          _buildTestItem('chip', 'test_sim', Icons.sim_card, onRun: _testSimCard),
+          _buildTestItem('usb', 'test_usb', Icons.usb, onRun: _testUsb),
+          _buildAestheticsSection(),
 
           const SizedBox(height: 20),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFD32F2F),
               padding: const EdgeInsets.all(18),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 3,
             ),
             onPressed: () {
               Navigator.pushNamed(context, '/result', arguments: {
@@ -218,32 +554,49 @@ class _TouchGridTestScreenState extends State<TouchGridTestScreen> {
 
   @override
   Widget build(BuildContext context) {
+    double progress = _painted.length / _totalBlocks;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return GestureDetector(
-              onPanUpdate: (details) => _onPanUpdate(details, constraints.biggest),
-              onPanDown: (details) => _onPanUpdate(DragUpdateDetails(globalPosition: details.globalPosition, localPosition: details.localPosition), constraints.biggest),
-              child: GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: _cols,
-                  childAspectRatio: (constraints.biggest.width / _cols) / (constraints.biggest.height / _rows),
-                ),
-                itemCount: _totalBlocks,
-                itemBuilder: (context, index) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.withOpacity(0.3)),
-                      color: _painted.contains(index) ? Colors.green : Colors.transparent,
+        child: Column(
+          children: [
+            // Progress bar
+            LinearProgressIndicator(
+              value: progress,
+              backgroundColor: Colors.grey.shade200,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                progress > 0.9 ? Colors.green : const Color(0xFFD32F2F),
+              ),
+              minHeight: 6,
+            ),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return GestureDetector(
+                    onPanUpdate: (details) => _onPanUpdate(details, constraints.biggest),
+                    onPanDown: (details) => _onPanUpdate(DragUpdateDetails(globalPosition: details.globalPosition, localPosition: details.localPosition), constraints.biggest),
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: _cols,
+                        childAspectRatio: (constraints.biggest.width / _cols) / (constraints.biggest.height / _rows),
+                      ),
+                      itemCount: _totalBlocks,
+                      itemBuilder: (context, index) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                            color: _painted.contains(index) ? Colors.green : Colors.transparent,
+                          ),
+                        );
+                      },
                     ),
                   );
                 },
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );

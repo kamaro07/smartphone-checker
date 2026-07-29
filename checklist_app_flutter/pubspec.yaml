@@ -43,6 +43,10 @@ dependencies:
   device_info_plus: ^13.2.0
   shared_preferences: ^2.5.5
   easy_localization: ^3.0.8
+  sensors_plus: ^6.1.1
+  screen_brightness: ^1.0.1
+  camera: ^0.11.1
+  permission_handler: ^11.4.0
 
 dev_dependencies:
   flutter_test:
