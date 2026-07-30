@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class ResultScreen extends StatefulWidget {
   const ResultScreen({super.key});
@@ -27,6 +29,7 @@ class _ResultScreenState extends State<ResultScreen> {
     'chip': {'label': 'test_sim', 'icon': Icons.sim_card},
     'usb': {'label': 'test_usb', 'icon': Icons.usb},
     'estetica': {'label': 'test_aesthetics', 'icon': Icons.phone_android},
+    'botoesFisicos': {'label': 'Teste de Botões', 'icon': Icons.gamepad},
   };
 
   void _sendReport(BuildContext context, Map<String, dynamic> deviceInfo, Map<String, bool?> tests, String ip) async {
@@ -38,27 +41,58 @@ class _ResultScreenState extends State<ResultScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final response = await http.post(
-        Uri.parse('http://$ip:3000/api/report'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'device': deviceInfo,
-          'tests': tests,
-          'date': DateTime.now().toIso8601String(),
-        }),
-      ).timeout(const Duration(seconds: 10));
+      // 1. Generate PDF
+      final pdf = pw.Document();
+      
+      pdf.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (pw.Context context) {
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text('Relatório de Teste do Aparelho', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 20),
+                pw.Text('Marca: ${deviceInfo['brand'] ?? '-'}', style: const pw.TextStyle(fontSize: 16)),
+                pw.Text('Modelo: ${deviceInfo['model'] ?? '-'}', style: const pw.TextStyle(fontSize: 16)),
+                pw.Text('IMEI: ${deviceInfo['imei'] ?? '-'}', style: const pw.TextStyle(fontSize: 16)),
+                pw.SizedBox(height: 20),
+                pw.Text('Resultados:', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                pw.SizedBox(height: 10),
+                pw.Table.fromTextArray(
+                  headers: ['Teste', 'Status'],
+                  data: _testMeta.keys.map((key) {
+                    final label = _testMeta[key]!['label'].toString();
+                    final result = tests[key];
+                    final status = result == true ? 'Aprovado' : result == false ? 'Reprovado' : 'Não Testado';
+                    return [label, status];
+                  }).toList(),
+                ),
+              ],
+            );
+          },
+        ),
+      );
+
+      final pdfBytes = await pdf.save();
+
+      // 2. Send PDF via HTTP Multipart
+      var request = http.MultipartRequest('POST', Uri.parse('http://$ip:8000/upload'));
+      request.files.add(http.MultipartFile.fromBytes('file', pdfBytes, filename: 'relatorio_${deviceInfo['imei'] ?? 'aparelho'}.pdf'));
+      
+      final response = await request.send();
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Relatório PDF gerado no Desktop!'), backgroundColor: Colors.green));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('PDF enviado para o computador com sucesso!'), backgroundColor: Colors.green));
           Navigator.of(context).popUntil((route) => route.isFirst);
         }
       } else {
-        throw Exception('Server error');
+        throw Exception('Server error: ${response.statusCode}');
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erro ao comunicar com o servidor.'), backgroundColor: Colors.red));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ao comunicar com o servidor: $e'), backgroundColor: Colors.red));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

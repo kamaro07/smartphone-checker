@@ -10,6 +10,7 @@ import 'rgb_screen_test.dart';
 import 'proximity_test_screen.dart';
 import 'brightness_test_screen.dart';
 import 'camera_test_screen.dart';
+import 'buttons_test_screen.dart';
 
 class TestScreen extends StatefulWidget {
   const TestScreen({super.key});
@@ -191,6 +192,14 @@ class _TestScreenState extends State<TestScreen> {
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CameraTestScreen(isFront: false))).then((result) {
       if (result != null) {
         _updateResult('cameraTraseira', result as bool);
+      }
+    });
+  }
+
+  void _openButtonsTest() {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ButtonsTestScreen())).then((result) {
+      if (result != null) {
+        _updateResult('botoesFisicos', result as bool);
       }
     });
   }
@@ -464,7 +473,7 @@ class _TestScreenState extends State<TestScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '$totalAnswered/11',
+                    '$totalAnswered/12',
                     style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD32F2F)),
                   ),
                 ),
@@ -482,6 +491,7 @@ class _TestScreenState extends State<TestScreen> {
           _buildTestItem('brilho', 'test_brightness', Icons.brightness_high, onRun: _openBrightnessTest),
           _buildTestItem('cameraFrontal', 'test_front_camera', Icons.camera_front, onRun: _openFrontCameraTest),
           _buildTestItem('cameraTraseira', 'test_rear_camera', Icons.camera_rear, onRun: _openRearCameraTest),
+          _buildTestItem('botoesFisicos', 'Teste de Botões', Icons.gamepad, onRun: _openButtonsTest),
           _buildTestItem('wifi', 'test_wifi', Icons.wifi, onRun: _testWifi),
           _buildTestItem('chip', 'test_sim', Icons.sim_card, onRun: _testSimCard),
           _buildTestItem('usb', 'test_usb', Icons.usb, onRun: _testUsb),
