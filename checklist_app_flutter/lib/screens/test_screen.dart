@@ -53,30 +53,28 @@ class _TestScreenState extends State<TestScreen> {
     }
   }
 
-  void _testSound() async {
+  Future<void> _playBeep(bool useEarpiece) async {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('sound_playing'.tr()), backgroundColor: Colors.blue),
+        SnackBar(content: Text('sound_playing'.tr()), backgroundColor: Colors.blue, duration: const Duration(seconds: 1)),
       );
     }
     try {
-      // Generate a test tone using a data URI with a simple beep
-      // Using a publicly available notification sound frequency
+      await _audioPlayer.stop();
+      await _audioPlayer.setAudioContext(AudioContext(
+        android: AudioContextAndroid(
+          isSpeakerphoneOn: !useEarpiece,
+          usageType: useEarpiece ? AndroidUsageType.voiceCommunication : AndroidUsageType.media,
+          contentType: useEarpiece ? AndroidContentType.speech : AndroidContentType.music,
+        ),
+        iOS: AudioContextIOS(
+          category: AVAudioSessionCategory.playAndRecord,
+          options: !useEarpiece ? const {AVAudioSessionOptions.defaultToSpeaker} : const {},
+        ),
+      ));
       await _audioPlayer.setVolume(1.0);
-      await _audioPlayer.play(
-        AssetSource(''),
-        mode: PlayerMode.mediaPlayer,
-      ).catchError((_) {
-        // If asset not found, use a URL-based tone
-      });
-
-      // Fallback: Use a simple URL tone
-      await _audioPlayer.play(
-        UrlSource('https://www.soundjay.com/buttons/beep-01a.mp3'),
-        mode: PlayerMode.mediaPlayer,
-      );
+      await _audioPlayer.play(AssetSource('audio/beep.wav'));
     } catch (e) {
-      // If all fails, show instruction to user
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('sound_question'.tr()), backgroundColor: Colors.orange),
@@ -84,6 +82,9 @@ class _TestScreenState extends State<TestScreen> {
       }
     }
   }
+
+  void _testLoudspeaker() => _playBeep(false);
+  void _testEarpiece() => _playBeep(true);
 
   void _testWifi() async {
     var connectivityResult = await (Connectivity().checkConnectivity());
@@ -473,7 +474,7 @@ class _TestScreenState extends State<TestScreen> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    '$totalAnswered/12',
+                    '$totalAnswered/13',
                     style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD32F2F)),
                   ),
                 ),
@@ -487,11 +488,12 @@ class _TestScreenState extends State<TestScreen> {
           _buildTestItem('telaRgb', 'test_rgb', Icons.color_lens, onRun: _openRgbTest),
           _buildTestItem('vibracao', 'test_vibration', Icons.vibration, onRun: _testVibration),
           _buildTestItem('sensorProximidade', 'test_proximity', Icons.sensors, onRun: _openProximityTest),
-          _buildTestItem('som', 'test_sound', Icons.volume_up, onRun: _testSound),
+          _buildTestItem('somCampainha', 'test_speaker', Icons.volume_up, onRun: _testLoudspeaker),
+          _buildTestItem('somAuricular', 'test_earpiece', Icons.hearing, onRun: _testEarpiece),
           _buildTestItem('brilho', 'test_brightness', Icons.brightness_high, onRun: _openBrightnessTest),
           _buildTestItem('cameraFrontal', 'test_front_camera', Icons.camera_front, onRun: _openFrontCameraTest),
           _buildTestItem('cameraTraseira', 'test_rear_camera', Icons.camera_rear, onRun: _openRearCameraTest),
-          _buildTestItem('botoesFisicos', 'Teste de Botões', Icons.gamepad, onRun: _openButtonsTest),
+          _buildTestItem('botoesFisicos', 'test_buttons', Icons.gamepad, onRun: _openButtonsTest),
           _buildTestItem('wifi', 'test_wifi', Icons.wifi, onRun: _testWifi),
           _buildTestItem('chip', 'test_sim', Icons.sim_card, onRun: _testSimCard),
           _buildTestItem('usb', 'test_usb', Icons.usb, onRun: _testUsb),

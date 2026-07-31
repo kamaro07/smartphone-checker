@@ -21,7 +21,8 @@ class _ResultScreenState extends State<ResultScreen> {
     'telaRgb': {'label': 'test_rgb', 'icon': Icons.color_lens},
     'vibracao': {'label': 'test_vibration', 'icon': Icons.vibration},
     'sensorProximidade': {'label': 'test_proximity', 'icon': Icons.sensors},
-    'som': {'label': 'test_sound', 'icon': Icons.volume_up},
+    'somCampainha': {'label': 'test_speaker', 'icon': Icons.volume_up},
+    'somAuricular': {'label': 'test_earpiece', 'icon': Icons.hearing},
     'brilho': {'label': 'test_brightness', 'icon': Icons.brightness_high},
     'cameraFrontal': {'label': 'test_front_camera', 'icon': Icons.camera_front},
     'cameraTraseira': {'label': 'test_rear_camera', 'icon': Icons.camera_rear},
@@ -29,7 +30,7 @@ class _ResultScreenState extends State<ResultScreen> {
     'chip': {'label': 'test_sim', 'icon': Icons.sim_card},
     'usb': {'label': 'test_usb', 'icon': Icons.usb},
     'estetica': {'label': 'test_aesthetics', 'icon': Icons.phone_android},
-    'botoesFisicos': {'label': 'Teste de Botões', 'icon': Icons.gamepad},
+    'botoesFisicos': {'label': 'test_buttons', 'icon': Icons.gamepad},
   };
 
   void _sendReport(BuildContext context, Map<String, dynamic> deviceInfo, Map<String, bool?> tests, String ip) async {
