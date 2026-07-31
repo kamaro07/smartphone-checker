@@ -17,6 +17,30 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+const multer = require('multer');
+const uploadDir = path.join(__dirname, 'reports');
+if (!fs.existsSync(uploadDir)){
+    fs.mkdirSync(uploadDir);
+}
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir)
+  },
+  filename: function (req, file, cb) {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    cb(null, timestamp + '_' + file.originalname)
+  }
+});
+const upload = multer({ storage: storage });
+
+app.post('/upload', upload.single('file'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).send('No file uploaded.');
+  }
+  console.log(`[Upload] PDF Recebido e salvo em: ${req.file.path}`);
+  res.status(200).json({ success: true, message: 'PDF recebido e salvo!', path: req.file.path });
+});
+
 // Estado global dos dispositivos detectados
 let connectedDevices = {};
 

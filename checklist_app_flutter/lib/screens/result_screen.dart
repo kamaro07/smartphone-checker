@@ -78,7 +78,7 @@ class _ResultScreenState extends State<ResultScreen> {
       final pdfBytes = await pdf.save();
 
       // 2. Send PDF via HTTP Multipart
-      var request = http.MultipartRequest('POST', Uri.parse('http://$ip:8000/upload'));
+      var request = http.MultipartRequest('POST', Uri.parse('http://$ip:3000/upload'));
       request.files.add(http.MultipartFile.fromBytes('file', pdfBytes, filename: 'relatorio_${deviceInfo['imei'] ?? 'aparelho'}.pdf'));
       
       final response = await request.send();
