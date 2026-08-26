@@ -1,0 +1,37 @@
+name: Build & Publish APK
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: '3.22.0'
+      - name: Install dependencies
+        run: flutter pub get
+      - name: Build APK (debug)
+        run: flutter build apk --debug
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug.apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "apk-${{ github.run_id }}"
+          name: "APK Build ${{ github.run_id }}"
+          draft: false
+          prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Attach APK to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          files: build/app/outputs/flutter-apk/app-debug.apk
