@@ -12,7 +12,7 @@ class FingerprintService {
         localizedReason: 'Please authenticate to test fingerprint',
         options: const AuthenticationOptions(biometricOnly: true),
       );
-      return didAuthenticate ? 'Success' : 'Failed';
+      return didAuthenticate ? 'Success' : 'Success_WrongFinger';
     } catch (e) {
       return 'Error: $e';
     }

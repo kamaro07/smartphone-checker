@@ -1,27 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:easy_localization/easy_localization.dart';
-import 'package:proximity_sensor/proximity_sensor.dart';
+import 'package:flutter/services.dart';
 import 'dart:async';
 
-class ProximityTestScreen extends StatefulWidget {
-  const ProximityTestScreen({super.key});
+class LightTestScreen extends StatefulWidget {
+  const LightTestScreen({super.key});
 
   @override
-  State<ProximityTestScreen> createState() => _ProximityTestScreenState();
+  State<LightTestScreen> createState() => _LightTestScreenState();
 }
 
-class _ProximityTestScreenState extends State<ProximityTestScreen> {
-  StreamSubscription<int>? _subscription;
-  bool _isNear = false;
-  bool _hasChanged = false;
+class _LightTestScreenState extends State<LightTestScreen> {
+  static const EventChannel _lightChannel = EventChannel('com.example.checklist_app_flutter/light');
+  StreamSubscription<dynamic>? _subscription;
+  int _lux = 0;
 
   @override
   void initState() {
     super.initState();
-    _subscription = ProximitySensor.events.listen((int event) {
+    _subscription = _lightChannel.receiveBroadcastStream().listen((dynamic event) {
       setState(() {
-        _isNear = (event == 1);
-        _hasChanged = true;
+        _lux = event as int;
       });
     });
   }
@@ -36,7 +34,7 @@ class _ProximityTestScreenState extends State<ProximityTestScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('proximity_instruction'.tr()),
+        title: const Text('Teste do Sensor de Luz'),
         backgroundColor: const Color(0xFFD32F2F),
         foregroundColor: Colors.white,
       ),
@@ -46,21 +44,21 @@ class _ProximityTestScreenState extends State<ProximityTestScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.sensors,
+              const Icon(
+                Icons.light_mode,
                 size: 100,
-                color: _isNear ? Colors.green : const Color(0xFFD32F2F),
+                color: Color(0xFFD32F2F),
               ),
               const SizedBox(height: 32),
-              Text(
-                'Aproxime a mão do topo do aparelho.\nStatus atual:',
+              const Text(
+                'Cubra e descubra o topo do aparelho.\nO valor deve mudar:',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 20),
+                style: TextStyle(fontSize: 20),
               ),
               const SizedBox(height: 16),
               Text(
-                _isNear ? 'PERTO' : 'LONGE',
-                style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: _isNear ? Colors.green : Colors.grey),
+                ' Lux',
+                style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.blueAccent),
               ),
               const SizedBox(height: 48),
               ElevatedButton(
@@ -72,7 +70,7 @@ class _ProximityTestScreenState extends State<ProximityTestScreen> {
                 onPressed: () {
                   Navigator.of(context).pop(true);
                 },
-                child: Text('proximity_working'.tr()),
+                child: const Text('Funciona perfeitamente'),
               ),
               const SizedBox(height: 16),
               OutlinedButton(
@@ -83,7 +81,7 @@ class _ProximityTestScreenState extends State<ProximityTestScreen> {
                 onPressed: () {
                   Navigator.of(context).pop(false);
                 },
-                child: Text('proximity_not_working'.tr()),
+                child: const Text('Não está funcionando'),
               ),
             ],
           ),

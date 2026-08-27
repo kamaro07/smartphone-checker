@@ -1,0 +1,1 @@
+(Get-Content checklist_app_flutter/pubspec.yaml) -replace 'sdk: ''\^3\.12\.2''', 'sdk: ''>=3.3.0 <4.0.0''' -replace 'sdk: \^3\.12\.2', 'sdk: ''>=3.3.0 <4.0.0''' | Set-Content checklist_app_flutter/pubspec.yaml

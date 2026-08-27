@@ -14,9 +14,10 @@ import 'brightness_test_screen.dart';
 import 'camera_test_screen.dart';
 import 'buttons_test_screen.dart';
 import '../services/fingerprint_service.dart';
-import '../services/nfc_service.dart';
-import '../services/light_service.dart';
-import '../services/audio_service.dart';
+import 'light_test_screen.dart';
+
+
+
 
 
 class TestScreen extends StatefulWidget {
@@ -77,6 +78,7 @@ class _TestScreenState extends State<TestScreen> {
     }
     try {
       await _audioPlayer.stop();
+      await _audioPlayer.setReleaseMode(ReleaseMode.loop);
       await _audioPlayer.setAudioContext(AudioContext(
         android: AudioContextAndroid(
           isSpeakerphoneOn: !useEarpiece,
@@ -90,6 +92,9 @@ class _TestScreenState extends State<TestScreen> {
       ));
       await _audioPlayer.setVolume(1.0);
       await _audioPlayer.play(AssetSource('audio/beep.wav'));
+      await Future.delayed(const Duration(seconds: 10));
+      await _audioPlayer.stop();
+      await _audioPlayer.setReleaseMode(ReleaseMode.release);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -121,48 +126,20 @@ class _TestScreenState extends State<TestScreen> {
   void _testFingerprint() async {
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Siga as instruções no sensor biométrico...')));
     final res = await FingerprintService.check();
-    if (res == 'Success') {
+    // Qualquer resposta que não seja 'Biometrics not available' significa que o sensor respondeu e funciona fisicamente.
+    if (res != 'Biometrics not available' && !res.startsWith('Error:')) {
       _updateResult('biometria', true);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Biometria OK!'), backgroundColor: Colors.green));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Sensor Biométrico Funcional!'), backgroundColor: Colors.green));
     } else {
       _updateResult('biometria', false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: ' + res), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro ou ausente: ' + res), backgroundColor: Colors.red));
     }
   }
 
-  void _testNfc() async {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Aproxime uma TAG NFC...')));
-    final res = await NfcService.check();
-    if (res.startsWith('Error') || res.startsWith('No tag')) {
-      _updateResult('nfc', false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res), backgroundColor: Colors.red));
-    } else {
-      _updateResult('nfc', true);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('NFC OK!'), backgroundColor: Colors.green));
-    }
-  }
-
-  void _testLight() async {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Lendo sensor de luz...')));
-    final res = await LightService.check();
-    if (res.startsWith('Lux:')) {
-      _updateResult('luz', true);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res), backgroundColor: Colors.green));
-    } else {
-      _updateResult('luz', false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro: ' + res), backgroundColor: Colors.red));
-    }
-  }
-
-  void _testAudio15s() async {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Gravando por 15 segundos... Fale algo.'), duration: Duration(seconds: 15)));
-    final res = await AudioService.record15Seconds();
-    if (res.startsWith('Error') || res.startsWith('File not')) {
-      _updateResult('microfone', false);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res), backgroundColor: Colors.red));
-    } else {
-      _updateResult('microfone', true);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Áudio 15s Gravado OK!'), backgroundColor: Colors.green));
+  void _openLightTest() async {
+    final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => const LightTestScreen()));
+    if (result != null) {
+      _updateResult('luz', result);
     }
   }
 
@@ -545,8 +522,8 @@ class _TestScreenState extends State<TestScreen> {
           _buildTestItem('telaRgb', 'test_rgb'.tr(), Icons.color_lens, onRun: _openRgbTest),
           _buildTestItem('vibracao', 'test_vibration'.tr(), Icons.vibration, onRun: _testVibration),
           _buildTestItem('sensorProximidade', 'test_proximity'.tr(), Icons.sensors, onRun: _openProximityTest),
-          _buildTestItem('somCampainha', 'test_speaker'.tr(), Icons.volume_up, onRun: _testLoudspeaker),
-          _buildTestItem('somAuricular', 'test_earpiece'.tr(), Icons.hearing, onRun: _testEarpiece),
+          _buildTestItem('somCampainha', 'Alto-falante (10s)', Icons.volume_up, onRun: _testLoudspeaker),
+          _buildTestItem('somAuricular', 'Auricular (10s)', Icons.hearing, onRun: _testEarpiece),
           _buildTestItem('brilho', 'test_brightness'.tr(), Icons.brightness_high, onRun: _openBrightnessTest),
           
           ..._cameras.asMap().entries.map((e) {
@@ -563,10 +540,8 @@ class _TestScreenState extends State<TestScreen> {
           _buildTestItem('wifi', 'test_wifi'.tr(), Icons.wifi, onRun: _testWifi),
           _buildTestItem('chip', 'test_sim'.tr(), Icons.sim_card, onRun: _testSimCard),
 
-          _buildTestItem('microfone', 'Microfone (15s)', Icons.mic, onRun: _testAudio15s),
           _buildTestItem('biometria', 'Impressão Digital', Icons.fingerprint, onRun: _testFingerprint),
-          _buildTestItem('nfc', 'NFC', Icons.nfc, onRun: _testNfc),
-          _buildTestItem('luz', 'Sensor de Luz', Icons.light_mode, onRun: _testLight),
+          _buildTestItem('luz', 'Sensor de Luz', Icons.light_mode, onRun: _openLightTest),
           _buildTestItem('usb', 'test_usb'.tr(), Icons.usb, onRun: _testUsb),
           _buildAestheticsSection(),
 
