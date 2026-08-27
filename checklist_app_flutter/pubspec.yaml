@@ -45,7 +45,6 @@ dependencies:
   easy_localization: ^3.0.8
   local_auth: ^2.2.0
   proximity_sensor: ^2.0.0
-  light: ^3.0.0
   flutter_sound: ^9.2.13
   flutter_nfc_kit: ^3.2.0
   sensors_plus: ^6.1.1

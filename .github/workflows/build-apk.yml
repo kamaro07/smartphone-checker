@@ -30,39 +30,9 @@ jobs:
         run: flutter pub get
         working-directory: checklist_app_flutter
 
-      - name: Patch light plugin
-        run: |
-          python -c "
-          import os
-          path = '/home/runner/.pub-cache/hosted/pub.dev/light-3.0.1/android/build.gradle'
-          if os.path.exists(path):
-              with open(path, 'r') as f:
-                  c = f.read()
-              if 'namespace' not in c:
-                  c = c.replace('android {', 'android {\n    namespace \"com.github.bruno128.light\"\n')
-                  with open(path, 'w') as f:
-                      f.write(c)
-              print('Patched successfully')
-          "
-
       - name: Build APK
         run: flutter build apk --release --android-skip-build-dependency-validation
         working-directory: checklist_app_flutter
-
-      - name: Patch light plugin
-        run: |
-          python -c "
-          import os
-          path = '/home/runner/.pub-cache/hosted/pub.dev/light-3.0.1/android/build.gradle'
-          if os.path.exists(path):
-              with open(path, 'r') as f:
-                  c = f.read()
-              if 'namespace' not in c:
-                  c = c.replace('android {', 'android {\n    namespace \"com.github.bruno128.light\"\n')
-                  with open(path, 'w') as f:
-                      f.write(c)
-              print('Patched successfully')
-          "
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

@@ -1,14 +1,14 @@
 import 'dart:async';
-import 'package:light/light.dart';
+import 'package:flutter/services.dart';
 
 class LightService {
+  static const EventChannel _lightChannel = EventChannel('com.example.checklist_app_flutter/light');
+
   static Future<String> check() async {
     try {
-      final light = Light();
-      // On some platforms, requestAuthorization may be needed, but usually not strictly for Android.
       final completer = Completer<String>();
-      StreamSubscription<int>? sub;
-      sub = light.lightSensorStream.listen((int lux) {
+      StreamSubscription<dynamic>? sub;
+      sub = _lightChannel.receiveBroadcastStream().listen((dynamic lux) {
         sub?.cancel();
         completer.complete('Lux: ' + lux.toString());
       }, onError: (e) {
