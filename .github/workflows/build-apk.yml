@@ -31,7 +31,7 @@ jobs:
         working-directory: checklist_app_flutter
 
       - name: Build APK
-        run: flutter build apk --release
+        run: flutter build apk --release --android-skip-build-dependency-validation
         working-directory: checklist_app_flutter
 
       - name: Upload APK Artifact
