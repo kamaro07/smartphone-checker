@@ -224,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 20),
 
-            Text('IMEI 1', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text('IMEI 1 (Automático via Cabo USB)', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFD32F2F))),
             const SizedBox(height: 8),
             TextField(
               controller: _imei1Controller,
@@ -237,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             const SizedBox(height: 10),
 
-            Text('IMEI 2 (Opcional)', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text('IMEI 2 (Opcional / Automático via Cabo)', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextField(
               controller: _imei2Controller,
