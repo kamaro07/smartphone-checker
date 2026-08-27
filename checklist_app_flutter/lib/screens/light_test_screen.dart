@@ -12,14 +12,18 @@ class LightTestScreen extends StatefulWidget {
 class _LightTestScreenState extends State<LightTestScreen> {
   static const EventChannel _lightChannel = EventChannel('com.example.checklist_app_flutter/light');
   StreamSubscription<dynamic>? _subscription;
-  int _lux = 0;
+  String _lux = "0";
 
   @override
   void initState() {
     super.initState();
     _subscription = _lightChannel.receiveBroadcastStream().listen((dynamic event) {
       setState(() {
-        _lux = event as int;
+        _lux = (event as num).toStringAsFixed(1);
+      });
+    }, onError: (dynamic error) {
+      setState(() {
+        _lux = "Erro (Sensor ausente)";
       });
     });
   }

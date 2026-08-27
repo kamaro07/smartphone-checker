@@ -92,7 +92,7 @@ class _TestScreenState extends State<TestScreen> {
       ));
       await _audioPlayer.setVolume(1.0);
       await _audioPlayer.play(AssetSource('audio/beep.wav'));
-      await Future.delayed(const Duration(seconds: 10));
+      await Future.delayed(const Duration(seconds: 5));
       await _audioPlayer.stop();
       await _audioPlayer.setReleaseMode(ReleaseMode.release);
     } catch (e) {
@@ -522,8 +522,8 @@ class _TestScreenState extends State<TestScreen> {
           _buildTestItem('telaRgb', 'test_rgb'.tr(), Icons.color_lens, onRun: _openRgbTest),
           _buildTestItem('vibracao', 'test_vibration'.tr(), Icons.vibration, onRun: _testVibration),
           _buildTestItem('sensorProximidade', 'test_proximity'.tr(), Icons.sensors, onRun: _openProximityTest),
-          _buildTestItem('somCampainha', 'Alto-falante (10s)', Icons.volume_up, onRun: _testLoudspeaker),
-          _buildTestItem('somAuricular', 'Auricular (10s)', Icons.hearing, onRun: _testEarpiece),
+          _buildTestItem('somCampainha', 'Alto-falante (5s)', Icons.volume_up, onRun: _testLoudspeaker),
+          _buildTestItem('somAuricular', 'Auricular (5s)', Icons.hearing, onRun: _testEarpiece),
           _buildTestItem('brilho', 'test_brightness'.tr(), Icons.brightness_high, onRun: _openBrightnessTest),
           
           ..._cameras.asMap().entries.map((e) {

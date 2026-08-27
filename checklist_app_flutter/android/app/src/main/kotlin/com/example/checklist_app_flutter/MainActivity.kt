@@ -5,11 +5,11 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.EventChannel
 
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
     private val LIGHT_CHANNEL = "com.example.checklist_app_flutter/light"
     private var sensorManager: SensorManager? = null
     private var lightSensor: Sensor? = null
@@ -31,7 +31,7 @@ class MainActivity : FlutterActivity() {
                     }
                     sensorEventListener = object : SensorEventListener {
                         override fun onSensorChanged(event: SensorEvent) {
-                            events?.success(event.values[0].toInt())
+                            events?.success(event.values[0].toDouble())
                         }
                         override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
                     }
