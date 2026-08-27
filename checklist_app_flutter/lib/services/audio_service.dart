@@ -7,7 +7,7 @@ import 'dart:io';
 class AudioService {
   static final _recorder = FlutterSoundRecorder();
 
-  static Future<String> record10Seconds() async {
+  static Future<String> record15Seconds() async {
     try {
       final tempDir = await getTemporaryDirectory();
       final filePath = '${tempDir.path}/audio_test_${DateTime.now().millisecondsSinceEpoch}.aac';
@@ -16,7 +16,7 @@ class AudioService {
         toFile: filePath,
         codec: Codec.aacADTS,
       );
-      await Future.delayed(const Duration(seconds: 10));
+      await Future.delayed(const Duration(seconds: 15));
       await _recorder.stopRecorder();
       await _recorder.closeRecorder();
       final file = File(filePath);
